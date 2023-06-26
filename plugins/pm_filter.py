@@ -118,9 +118,19 @@ async def next_page(bot: Client, update: CallbackQuery):
     btn = copy.deepcopy(files[offset])
     del files
 
-    btn.insert(0, 
+    # btn.insert(0, 
+    #     [
+    #         InlineKeyboardButton(f'🎬 {key} 🎬', 'reqst1')
+    #     ]
+    # )
+    btn.insert(0,
         [
-            InlineKeyboardButton(f'🎬 {key} 🎬', 'reqst1')
+            InlineKeyboardButton("Ott Updates", url="https://t.me/ott_updateztg"),
+        ]
+    )
+    btn.insert(1,
+        [
+            InlineKeyboardButton("Groups", url="https://t.me/group_linkzzzz"),
         ]
     )
 
@@ -279,9 +289,20 @@ async def auto_filter(client, msg: Message, spoll=False):
 
 
     total_pages = len(btn)
-    btn[0].insert(0, 
+    # btn[0].insert(0, 
+    #     [
+    #         InlineKeyboardButton(f'🎬 {search} 🎬', 'reqst1')
+    #     ]
+    # )
+
+    btn[0].insert(0,
         [
-            InlineKeyboardButton(f'🎬 {search} 🎬', 'reqst1')
+            InlineKeyboardButton("Ott Updates", url="https://t.me/ott_updateztg"),
+        ]
+    )
+    btn[0].insert(1,
+        [
+            InlineKeyboardButton("Groups", url="https://t.me/group_linkzzzz"),
         ]
     )
 
