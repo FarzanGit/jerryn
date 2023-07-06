@@ -51,7 +51,7 @@ async def clrcache(_, message):
     await message.reply("**𝙲𝙰𝙲𝙷𝙴 𝙲𝙻𝙴𝙰𝚁𝙴𝙳**")
 
 
-@Client.on_message((filters.group | filters.private) & filters.text & filters.incoming, group=-3)
+@Client.on_message((filters.group) & filters.text & filters.incoming, group=-3)
 async def give_filter(bot: Client, update: Message):
     group_id = update.chat.id
     name = update.text
