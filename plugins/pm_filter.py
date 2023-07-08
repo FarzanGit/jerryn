@@ -22,7 +22,7 @@ from database.filters_mdb import (
 )
 
 
-from info import DELETE_TIME, AUTH_CHANNEL, CUSTOM_FILE_CAPTION, ADMINS, REQ_CHANNEL
+from info import DELETE_TIME, AUTH_CHANNEL, CUSTOM_FILE_CAPTION, ADMINS, REQ_CHANNEL, DELETE_MSGS
 from utils import get_size, get_poster, google_search, get_settings, temp, is_subscribed
 
 
@@ -82,10 +82,11 @@ async def give_filter(bot: Client, update: Message):
                             reply_markup=InlineKeyboardMarkup(eval(btn)) if btn != "[]" else None,
                         )
                     seconds = await get_config("DELETE_TIME", DELETE_TIME)
-                    scheduler.add_job(
-                        delete_msg, 'date', args=[bot, k, update.from_user.id], 
-                        run_date=datetime.now() + timedelta(seconds=seconds)
-                    )
+                    if DELETE_MSGS:
+                        scheduler.add_job(
+                            delete_msg, 'date', args=[bot, k, update.from_user.id], 
+                            run_date=datetime.now() + timedelta(seconds=seconds)
+                        )
                 except Exception as e:
                     logger.exception(e, exc_info=True)
                 break 
@@ -202,7 +203,8 @@ async def advantage_spoll_choker(bot: Client, update: CallbackQuery):
         else:
             k = await update.message.edit('Movie not found')
             seconds = await get_config("DELETE_TIME", DELETE_TIME)
-            scheduler.add_job(k.delete, 'date', run_date=datetime.now() + timedelta(seconds=seconds))
+            if DELETE_MSGS:
+                scheduler.add_job(k.delete, 'date', run_date=datetime.now() + timedelta(seconds=seconds))
 
 
 async def auto_filter(client, msg: Message, spoll=False):
@@ -373,10 +375,11 @@ async def auto_filter(client, msg: Message, spoll=False):
     else:
         k = await message.reply_text(cap, quote=True, reply_markup=InlineKeyboardMarkup(btn))
 
-    scheduler.add_job(
-        delete_msg, 'date', args=[client, k, message.from_user.id], 
-        run_date=datetime.now() + timedelta(seconds=seconds)
-    )
+    if DELETE_MSGS:
+        scheduler.add_job(
+            delete_msg, 'date', args=[client, k, message.from_user.id], 
+            run_date=datetime.now() + timedelta(seconds=seconds)
+        )
 
     if spoll:
         await msg.message.delete()
@@ -401,7 +404,8 @@ async def advance_spell_check(msg):
             text="I couldn't find any movie in that name.",
             quote=True,
         )
-        scheduler.add_job(k.delete, 'date', run_date=datetime.now() + timedelta(seconds=8),misfire_grace_time=60)
+        if DELETE_MSGS:
+            scheduler.add_job(k.delete, 'date', run_date=datetime.now() + timedelta(seconds=8),misfire_grace_time=60)
         return
 
     regex = re.compile(r".*(imdb|wikipedia).*", re.IGNORECASE)  # look for imdb / wiki results
@@ -438,7 +442,8 @@ async def advance_spell_check(msg):
             text="I couldn't find anything related to that. Check your spelling",
             quote=True,
         )
-        scheduler.add_job(k.delete, 'date', run_date=datetime.now() + timedelta(seconds=8),misfire_grace_time=60)
+        if DELETE_MSGS:
+            scheduler.add_job(k.delete, 'date', run_date=datetime.now() + timedelta(seconds=8),misfire_grace_time=60)
         return
 
     SPELL_CHECK[msg.id] = movielist
@@ -452,7 +457,8 @@ async def advance_spell_check(msg):
     btn.append([InlineKeyboardButton(text="Close", callback_data=f'spolling#{user}#close_spellcheck')])
     k = await msg.reply("I couldn't find anything related to that\nDid you mean any one of these?", True,
                     reply_markup=InlineKeyboardMarkup(btn))
-    scheduler.add_job(k.delete, 'date', run_date=datetime.now() + timedelta(seconds=60),misfire_grace_time=60)
+    if DELETE_MSGS:
+        scheduler.add_job(k.delete, 'date', run_date=datetime.now() + timedelta(seconds=60),misfire_grace_time=60)
 
 
 async def manual_filters(client: Client, message: Message, text=False):
@@ -490,11 +496,11 @@ async def manual_filters(client: Client, message: Message, text=False):
                         )
                 except Exception as e:
                     logger.exception(e, exc_info=True)
-                
-                scheduler.add_job(
-                    delete_msg, 'date', args=[client, k, message.from_user.id], 
-                    run_date=datetime.now() + timedelta(seconds=seconds)
-                )
+                if DELETE_MSGS:
+                    scheduler.add_job(
+                        delete_msg, 'date', args=[client, k, message.from_user.id], 
+                        run_date=datetime.now() + timedelta(seconds=seconds)
+                    )
                 
                 break
     else:
@@ -510,7 +516,8 @@ async def delete_msg(bot: Client, msg: Message, user_id: int):
         "Your request has been deleted\n",
     )
 
-    scheduler.add_job(k.delete, 'date', run_date=datetime.now() + timedelta(hours=2), misfire_grace_time=60)
+    if DELETE_MSGS:
+        scheduler.add_job(k.delete, 'date', run_date=datetime.now() + timedelta(hours=2), misfire_grace_time=60)
 
 
 @Client.on_callback_query(filters.regex(r"files?_?#.+"), group=-2)
@@ -569,6 +576,6 @@ def auto_restart():
     os.execl(executable,executable,"bot.py")
 
 
-scheduler.add_job(auto_restart,'interval', hours=10)
+# scheduler.add_job(auto_restart,'interval', hours=10)
 
 scheduler.start()
