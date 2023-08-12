@@ -22,7 +22,7 @@ from database.filters_mdb import (
 )
 
 
-from info import DELETE_TIME, AUTH_CHANNEL, CUSTOM_FILE_CAPTION, ADMINS, REQ_CHANNEL, DELETE_MSGS
+from info import DELETE_TIME, AUTH_CHANNEL, CUSTOM_FILE_CAPTION, ADMINS, REQ_CHANNEL, DELETE_MSGS, CORRECTION_TEXT
 from utils import get_size, get_poster, google_search, get_settings, temp, is_subscribed
 
 
@@ -245,10 +245,17 @@ async def auto_filter(client, msg: Message, spoll=False):
             # Limit to max no of total results
             files = files[:max_results]
             if not files:
-                if settings["spell_check"]:
-                    return await advance_spell_check(msg)
-                else:
-                    return
+                if CORRECTION_TEXT is True:
+                    btn = [[
+                        InlineKeyboardButton('search google', url=f"https://www.google.com/search?q={search}")
+                    ]]
+                    await msg.reply_text(
+                        text="Hey\nI couldn't find anything. Search in google then send correct name",
+                        reply_markup=InlineKeyboardMarkup(btn))
+               # if settings["spell_check"]:
+               #     return await advance_spell_check(msg)
+               # else:
+               #     return
         
             total_results = len(files)
 
