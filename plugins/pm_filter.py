@@ -7,11 +7,12 @@ from sys import executable
 
 from datetime import datetime, timedelta
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from urllib.parse import quote
 
 from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
 from pyrogram.errors import MediaEmpty, PhotoInvalidDimensions, WebpageMediaEmpty
-from pyrogram.errors import MessageNotModified, FloodWait
+from pyrogram.errors import MessageNotModified, ChatAdminRequired, MessageDeleteForbidden
 from pyrogram.errors import UserIsBlocked, PeerIdInvalid
 
 from database.ia_filterdb import get_file_details, get_search_results
@@ -22,7 +23,7 @@ from database.filters_mdb import (
 )
 
 
-from info import DELETE_TIME, AUTH_CHANNEL, CUSTOM_FILE_CAPTION, ADMINS, REQ_CHANNEL, DELETE_MSGS, CORRECTION_TEXT
+from info import DELETE_TIME, AUTH_CHANNEL, CUSTOM_FILE_CAPTION, ADMINS, REQ_CHANNEL, DELETE_MSGS, CORRECTION_TEXT, DELETE_MSGS_ALERT
 from utils import get_size, get_poster, google_search, get_settings, temp, is_subscribed
 
 
@@ -245,17 +246,11 @@ async def auto_filter(client, msg: Message, spoll=False):
             # Limit to max no of total results
             files = files[:max_results]
             if not files:
-                if CORRECTION_TEXT is True:
-                    btn = [[
-                        InlineKeyboardButton('search google', url=f"https://www.google.com/search?q={search}")
-                    ]]
-                    await msg.reply_text(
-                        text="Hey\nI couldn't find anything. Search in google then send correct name",
-                        reply_markup=InlineKeyboardMarkup(btn))
-               # if settings["spell_check"]:
-               #     return await advance_spell_check(msg)
-               # else:
-               #     return
+                if CORRECTION_TEXT:
+                    await new_spell_check(msg)
+                else:
+                    return await advance_spell_check(msg)
+                    return
         
             total_results = len(files)
 
@@ -392,6 +387,37 @@ async def auto_filter(client, msg: Message, spoll=False):
         await msg.message.delete()
 
 
+async def new_spell_check(update: Message):
+
+    k = await update.reply(
+        "<b>HeY ✨\nI couldn't find anything related to your request. 🤧\nTry reading the instructions below 👇</b>",
+        True,
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton("ENG", callback_data="spellcheck#eng"),
+                    InlineKeyboardButton("MAL", callback_data="spellcheck#mal"),
+                    InlineKeyboardButton("HIN", callback_data="spellcheck#hin"),
+                    InlineKeyboardButton("TAM", callback_data="spellcheck#tam"),   
+                ],
+                [
+                    InlineKeyboardButton("🔍 Search Name On Google", url="https://google.com/search?q={}".format(quote(update.text.replace(" ", "+")))),
+                ]
+            ]
+        )
+    )
+
+    try:
+        scheduler.add_job(update.delete, 'date', run_date=datetime.now() + timedelta(minutes=2), misfire_grace_time=60)
+        scheduler.add_job(k.delete, 'date', run_date=datetime.now() + timedelta(minutes=2), misfire_grace_time=60)
+    except ChatAdminRequired:
+        await k.reply("I'm not an admin here. Please make me admin with delete permission.")
+        return
+    except MessageDeleteForbidden:
+        await k.reply("I'm not an admin here. Please make me admin with delete permission.")
+        return
+
+
 async def advance_spell_check(msg):
     query = re.sub(
         r"\b(pl(i|e)*?(s|z+|ease|se|ese|(e+)s(e)?)|((send|snd|giv(e)?|\
@@ -518,12 +544,13 @@ async def delete_msg(bot: Client, msg: Message, user_id: int):
     
     await msg.delete()
     await msg.reply_to_message.delete()
-    k = await msg.reply_to_message.reply(
-        f"Hey {msg.reply_to_message.from_user.mention},\n\n"
-        "Your request has been deleted\n",
-    )
 
-    if DELETE_MSGS:
+    if DELETE_MSGS_ALERT:
+        k = await msg.reply_to_message.reply(
+            f"Hey {msg.reply_to_message.from_user.mention},\n\n"
+            "Your request has been deleted\n",
+        )
+
         scheduler.add_job(k.delete, 'date', run_date=datetime.now() + timedelta(hours=2), misfire_grace_time=60)
 
 

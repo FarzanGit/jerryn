@@ -3,7 +3,7 @@ import logging
 
 from pyrogram import Client, enums
 from pyrogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
-from pyrogram.errors import UserIsBlocked, PeerIdInvalid
+from pyrogram.errors import MessageNotModified
 
 from database.users_chats_db import db
 from database.ia_filterdb import get_file_details, total_filter_Counts
@@ -424,6 +424,43 @@ async def cb_handler(client: Client, query: CallbackQuery):
             reply_markup=reply_markup,
             parse_mode=enums.ParseMode.HTML
         )
+
+    elif query.data.startswith("spellcheck#"):
+        lang =  query.data.split("#")[-1]
+
+        if lang == "eng":
+            text = "English Text"
+
+        elif lang == "mal":
+            text = "Malayalam Text"
+
+        elif lang == "hin":
+            text = "Hindi Text"
+
+        elif lang == "tam":
+            text = "Tamil Text"
+
+        else:
+            return
+
+        try:
+            await query.message.edit_text(
+                text=text,
+                parse_mode=enums.ParseMode.HTML,
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        [
+                            InlineKeyboardButton("🔍 Search On Google", url=query.message.reply_markup.inline_keyboard[-1][0].url)
+                        ],
+                        [
+                            InlineKeyboardButton("Close", "close_data")
+                        ]
+                    ]
+                )
+            )
+        except MessageNotModified:
+            await query.answer("Already Selected")
+            pass
 
     elif query.data.startswith("setgs"):
         ident, set_type, status, grp_id = query.data.split("#")
