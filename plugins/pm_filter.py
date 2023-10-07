@@ -565,8 +565,10 @@ async def file_cb(bot: Client, update: CallbackQuery):
     files = files_[0]
     title = files.file_name
     size = get_size(files.file_size)
-    try: f_caption = files.caption
-    except: f_caption = ""
+    try: 
+        f_caption = files.caption
+    except: 
+        f_caption = ""
     settings = await get_settings(update.message.chat.id)
 
     if CUSTOM_FILE_CAPTION:
