@@ -183,6 +183,7 @@ async def start(client, message):
 
     files_ = await get_file_details(file_id)
     if not files_:
+        return
         pre, file_id = ((base64.urlsafe_b64decode(data + "=" * (-len(data) % 4))).decode("ascii")).split("_", 1)
         try:
             msg = await client.send_cached_media(
